@@ -1,0 +1,146 @@
+This Customer Feedback Dashboard analyzes customer ratings and feedback to evaluate satisfaction levels and overall service performance. 
+The application classifies feedback into positive, neutral, and negative categories, generating meaningful insights through interactive visualizations. It presents key metrics, rating trends, and sentiment distributions to support data-driven decisions. 
+The dashboard also enables summary reporting and provides a clear view of customer experience patterns.
+
+CODE:
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Page Configuration
+st.set_page_config(page_title="Customer Feedback Dashboard", layout="wide")
+
+# Title
+st.title("Customer Feedback Dashboard")
+st.markdown("Analyze customer ratings and feedback using Data Analytics")
+
+# Sample Dataset
+data = {
+    'Customer': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+    'Rating': [5, 4, 3, 5, 2, 4, 1, 5, 3, 2],
+    'Feedback': [
+        'Excellent Service',
+        'Good Product',
+        'Average Experience',
+        'Excellent Support',
+        'Poor Quality',
+        'Good Service',
+        'Very Bad Experience',
+        'Excellent Product',
+        'Average Support',
+        'Poor Delivery'
+    ]
+}
+
+df = pd.DataFrame(data)
+
+# Sentiment Analysis
+def sentiment(rating):
+    if rating >= 4:
+        return "Positive"
+    elif rating == 3:
+        return "Neutral"
+    else:
+        return "Negative"
+
+df["Sentiment"] = df["Rating"].apply(sentiment)
+
+# Dataset Display
+st.subheader("Customer Feedback Data")
+st.dataframe(df)
+
+# KPI Metrics
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric("Total Customers", len(df))
+col2.metric("Average Rating", round(df["Rating"].mean(), 2))
+col3.metric("Highest Rating", df["Rating"].max())
+col4.metric("Lowest Rating", df["Rating"].min())
+
+# Rating Distribution Chart
+st.subheader("Rating Distribution")
+
+fig, ax = plt.subplots()
+df["Rating"].value_counts().sort_index().plot(kind="bar", ax=ax)
+ax.set_xlabel("Rating")
+ax.set_ylabel("Count")
+ax.set_title("Customer Rating Distribution")
+st.pyplot(fig)
+
+# Sentiment Distribution
+st.subheader("Sentiment Analysis")
+
+fig2, ax2 = plt.subplots()
+df["Sentiment"].value_counts().plot(
+    kind="pie",
+    autopct="%1.1f%%",
+    ax=ax2
+)
+ax2.set_ylabel("")
+st.pyplot(fig2)
+
+# Customer Rating Trend
+st.subheader("Customer Rating Trend")
+
+fig3, ax3 = plt.subplots()
+ax3.plot(df["Customer"], df["Rating"], marker="o")
+ax3.set_xlabel("Customer")
+ax3.set_ylabel("Rating")
+ax3.set_title("Rating Trend")
+st.pyplot(fig3)
+
+# Customer Categories
+st.subheader("Customer Categories")
+
+high_ratings = len(df[df["Rating"] >= 4])
+low_ratings = len(df[df["Rating"] <= 2])
+
+st.write("Highly Satisfied Customers:", high_ratings)
+st.write("Unsatisfied Customers:", low_ratings)
+
+# Rating Percentages
+st.subheader("Rating Percentage Analysis")
+
+rating_percentage = (
+    df["Rating"].value_counts() / len(df)
+) * 100
+
+st.dataframe(
+    rating_percentage.reset_index().rename(
+        columns={
+            "index": "Rating",
+            "Rating": "Percentage"
+        }
+    )
+)
+
+# Sentiment Table
+st.subheader("Sentiment Summary")
+st.dataframe(df["Sentiment"].value_counts())
+
+# Download Report
+summary = pd.DataFrame({
+    "Metric": [
+        "Total Customers",
+        "Average Rating",
+        "Positive Feedback",
+        "Negative Feedback"
+    ],
+    "Value": [
+        len(df),
+        round(df["Rating"].mean(), 2),
+        len(df[df["Sentiment"] == "Positive"]),
+        len(df[df["Sentiment"] == "Negative"])
+    ]
+})
+
+csv = summary.to_csv(index=False)
+
+st.download_button(
+    label="Download Summary Report",
+    data=csv,
+    file_name="customer_feedback_report.csv",
+    mime="text/csv"
+)
+
+st.success("Dashboard Loaded Successfully")
